@@ -123,7 +123,7 @@ end
 
 function graphics.newFont(size, hinting, dpiscale)
     local baseFontSize = 32
-    local font = lovr.graphics.newFont("assets/NotoSans-Regular.ttf", baseFontSize)
+    local font = lovr.graphics.newFont(baseFontSize)
     font:setPixelDensity(baseFontSize / size)
     return font
 end
