@@ -3,6 +3,9 @@
 A LÖVR backend for the [IUI](https://github.com/DonaldHays/iui) immediate mode
 GUI library.
 
+A [sample project](https://github.com/DonaldHays/iui-sample-lovr) that uses this
+backend is available.
+
 ## Installation
 
 This library provides the backend for [IUI](https://github.com/DonaldHays/iui)
