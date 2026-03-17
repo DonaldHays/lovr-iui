@@ -3,6 +3,8 @@ local iui               --- @type IUILib
 local defaultClipShader --- @type Shader
 local fontClipShader    --- @type Shader
 
+local imageSampler      --- @type Sampler
+
 local currentClipShader = nil
 local currentClip = nil
 local hasSetClip = false
@@ -86,6 +88,10 @@ function graphics.load(lib, backend)
     fontClipShader = lovr.graphics.newShader(
         backend.resourcePath .. "shaders/ui-clip.glsl", "font"
     )
+
+    imageSampler = lovr.graphics.newSampler {
+        wrap = { "clamp", "clamp", "clamp" }
+    }
 end
 
 --- @param window LovrIUIWorldWindow
@@ -126,6 +132,11 @@ function graphics.newFont(size, hinting, dpiscale)
     local font = lovr.graphics.newFont(baseFontSize)
     font:setPixelDensity(baseFontSize / size)
     return font
+end
+
+--- @param image Texture
+function graphics.getImageDimensions(image)
+    return image:getDimensions()
 end
 
 function graphics.clip(x, y, w, h)
@@ -183,6 +194,14 @@ end
 function graphics.print(s, x, y)
     setClipShader(fontClipShader)
     graphics.pass:text(s, x, windowHeight - y, 0, 1, 0, 0, 1, 0, 0, "left", "top")
+end
+
+--- @param image Texture
+function graphics.image(image, x, y, w, h)
+    setClipShader(defaultClipShader)
+    graphics.pass:setMaterial(image)
+    graphics.pass:plane(x + w * 0.5, windowHeight - (y + h * 0.5), 0, w, h)
+    graphics.pass:setMaterial()
 end
 
 return graphics
