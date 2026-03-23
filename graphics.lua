@@ -1,19 +1,22 @@
-local iui                  --- @type IUILib
+local iui                           --- @type IUILib
 
-local colorClipShader      --- @type Shader
-local fontClipShader       --- @type Shader
-local imageClipShader      --- @type Shader
-local imageUnclippedShader --- @type Shader
+local colorClipShader               --- @type Shader
+local fontClipShader                --- @type Shader
+local imageClipShader               --- @type Shader
+local imageUnclippedShader          --- @type Shader
 
-local imageSampler         --- @type Sampler
+local nearestImageSampler           --- @type Sampler
+local linearImageSampler            --- @type Sampler
 
-local currentShader = nil  --- @type Shader?
-local isClipDirty = false  --- @type boolean
-local currentClip = nil    --- @type number[]?
+local currentImageFilter = "linear" --- @type IUIImageFilter
+local currentShader = nil           --- @type Shader?
+local isFilterDirty = false         --- @type boolean
+local isClipDirty = false           --- @type boolean
+local currentClip = nil             --- @type number[]?
 
-local currentWindow        --- @type LovrIUIWorldWindow
-local windowWidth          --- @type number
-local windowHeight         --- @type number
+local currentWindow                 --- @type LovrIUIWorldWindow
+local windowWidth                   --- @type number
+local windowHeight                  --- @type number
 
 --- @alias LovrIUIShaderName "color" | "font" | "image"
 
@@ -40,13 +43,27 @@ local function setShader(shader)
         end
     end
 
+    local targetSampler = linearImageSampler
+
+    if currentImageFilter == "nearest" then
+        targetSampler = nearestImageSampler
+    end
+
     if targetShader ~= currentShader then
         graphics.pass:setShader(targetShader --[[@as any]])
         currentShader = targetShader
 
         if shader == "image" then
-            graphics.pass:send("imageSampler", imageSampler)
+            graphics.pass:send("useAAUV", currentImageFilter == "smooth")
+            graphics.pass:send("imageSampler", targetSampler)
+            isFilterDirty = false
         end
+    end
+
+    if isFilterDirty then
+        graphics.pass:send("useAAUV", currentImageFilter == "smooth")
+        graphics.pass:send("imageSampler", targetSampler)
+        isFilterDirty = false
     end
 
     if currentShader and currentClip and isClipDirty then
@@ -115,6 +132,14 @@ local function setClip(clip)
     currentClip = clip
 end
 
+--- @param filter IUIImageFilter
+local function setFilter(filter)
+    if filter ~= currentImageFilter then
+        currentImageFilter = filter
+        isFilterDirty = true
+    end
+end
+
 --- @param lib IUILib
 --- @param backend LovrIUIBackend
 function graphics.load(lib, backend)
@@ -138,7 +163,12 @@ function graphics.load(lib, backend)
         backend.resourcePath .. "shaders/ui-image.glsl"
     )
 
-    imageSampler = lovr.graphics.newSampler {
+    nearestImageSampler = lovr.graphics.newSampler {
+        wrap = { "clamp", "clamp", "clamp" },
+        filter = { "nearest", "nearest", "linear" },
+    }
+
+    linearImageSampler = lovr.graphics.newSampler {
         wrap = { "clamp", "clamp", "clamp" },
     }
 end
@@ -151,8 +181,10 @@ end
 function graphics.beginDraw(width, height)
     windowWidth = width
     windowHeight = height
+    currentImageFilter = "linear"
     currentShader = nil
     currentClip = nil
+    isFilterDirty = false
     isClipDirty = false
 
     if iui.idiom == "desktop" then
@@ -246,7 +278,8 @@ function graphics.print(s, x, y)
 end
 
 --- @param image Texture
-function graphics.image(image, x, y, w, h)
+function graphics.image(image, filter, x, y, w, h)
+    setFilter(filter)
     setShader("image")
     graphics.pass:setMaterial(image)
     graphics.pass:plane(x + w * 0.5, windowHeight - (y + h * 0.5), 0, w, h)
