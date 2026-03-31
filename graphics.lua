@@ -187,12 +187,14 @@ function graphics.beginDraw(width, height)
     isFilterDirty = false
     isClipDirty = false
 
-    if iui.idiom == "desktop" then
-        local pass = graphics.pass
+    local pass = graphics.pass
 
+    pass:setShader()
+    pass:setMaterial()
+
+    if iui.idiom == "desktop" then
         pass:push()
         pass:setDepthTest()
-        pass:setMaterial()
 
         pass:setViewPose(1, mat4():identity(), false)
         pass:setProjection(1, mat4():orthographic(
