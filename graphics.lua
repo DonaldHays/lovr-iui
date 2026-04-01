@@ -4,6 +4,8 @@ local colorClipShader               --- @type Shader
 local fontClipShader                --- @type Shader
 local imageClipShader               --- @type Shader
 local imageUnclippedShader          --- @type Shader
+local msdfImageClipShader           --- @type Shader
+local msdfImageUnclippedShader      --- @type Shader
 
 local nearestImageSampler           --- @type Sampler
 local linearImageSampler            --- @type Sampler
@@ -18,7 +20,7 @@ local currentWindow                 --- @type LovrIUIWorldWindow
 local windowWidth                   --- @type number
 local windowHeight                  --- @type number
 
---- @alias LovrIUIShaderName "color" | "font" | "image"
+--- @alias LovrIUIShaderName "color" | "font" | "image" | "msdf"
 
 --- @class LovrIUIGraphics: IUIGraphicsBackend
 --- @field pass Pass
@@ -40,6 +42,12 @@ local function setShader(shader)
             targetShader = imageClipShader
         else
             targetShader = imageUnclippedShader
+        end
+    elseif shader == "msdf" then
+        if currentClip then
+            targetShader = msdfImageClipShader
+        else
+            targetShader = msdfImageUnclippedShader
         end
     end
 
@@ -161,6 +169,16 @@ function graphics.load(lib, backend)
     imageUnclippedShader = lovr.graphics.newShader(
         "unlit",
         backend.resourcePath .. "shaders/ui-image.glsl"
+    )
+
+    msdfImageClipShader = lovr.graphics.newShader(
+        backend.resourcePath .. "shaders/ui-clip.glsl",
+        backend.resourcePath .. "shaders/ui-msdf.glsl"
+    )
+
+    msdfImageUnclippedShader = lovr.graphics.newShader(
+        "unlit",
+        backend.resourcePath .. "shaders/ui-msdf.glsl"
     )
 
     nearestImageSampler = lovr.graphics.newSampler {
@@ -345,6 +363,14 @@ function graphics.nineSlice(nineSlice, filter, x, y, w, h)
     graphics.pass:setMaterial(image)
 
     graphics.pass:draw(mesh)
+    graphics.pass:setMaterial()
+end
+
+function graphics.msdfImage(image, x, y, w, h)
+    setFilter("linear")
+    setShader("msdf")
+    graphics.pass:setMaterial(image)
+    graphics.pass:plane(x + w * 0.5, windowHeight - (y + h * 0.5), 0, w, h)
     graphics.pass:setMaterial()
 end
 
