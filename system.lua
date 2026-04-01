@@ -56,6 +56,10 @@ function system.setCursor(cursor)
     system.currentCursor = (cursor --[[@as any]]) or system.defaultCursor
 end
 
+function system.getMSDFImage(name)
+    return loadLinearTexture(name)
+end
+
 function system.getDPI()
     return lovr.system.getWindowDensity()
 end
