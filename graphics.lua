@@ -65,12 +65,18 @@ local function setShader(shader)
             graphics.pass:send("useAAUV", currentImageFilter == "smooth")
             graphics.pass:send("imageSampler", targetSampler)
             isFilterDirty = false
+        elseif shader == "msdf" then
+            graphics.pass:send("msdfSampler", targetSampler)
         end
     end
 
     if isFilterDirty then
-        graphics.pass:send("useAAUV", currentImageFilter == "smooth")
-        graphics.pass:send("imageSampler", targetSampler)
+        if shader == "image" then
+            graphics.pass:send("useAAUV", currentImageFilter == "smooth")
+            graphics.pass:send("imageSampler", targetSampler)
+        elseif shader == "msdf" then
+            graphics.pass:send("msdfSampler", targetSampler)
+        end
         isFilterDirty = false
     end
 

@@ -16,9 +16,7 @@ float median(float a, float b, float c) {
 }
 
 vec4 lovrmain() {
-    vec2 uv = clamp(UV, vec2(0.01), vec2(0.99));
-
-    vec3 msd = texture(sampler2D(ColorTexture, msdfSampler), uv).rgb;
+    vec3 msd = texture(sampler2D(ColorTexture, msdfSampler), UV).rgb;
     float sd = median(msd.r, msd.g, msd.b);
     float screenPxDistance = screenPxRange() * (sd - 0.5);
     float opacity = clamp(screenPxDistance + 0.5, 0.0, 1.0);
