@@ -154,6 +154,60 @@ local function setFilter(filter)
     end
 end
 
+local function nineSliceMesh(nineSlice, x, y, w, h)
+    local image = nineSlice.image --- @type Texture
+
+    local iw, ih = image:getDimensions()
+
+    local l, t, r, b = nineSlice.l, nineSlice.t, nineSlice.r, nineSlice.b
+    local uvl, uvt, uvr, uvb = l / iw, t / ih, (iw - r) / iw, (ih - b) / ih
+    local wh = windowHeight
+
+    local mesh = lovr.graphics.newMesh(
+        {
+            { "VertexPosition", "vec2" },
+            { "VertexUV",       "vec2" },
+        },
+        {
+            { x,         wh - (y),         0,   0 },
+            { x + l,     wh - (y),         uvl, 0 },
+            { x + w - r, wh - (y),         uvr, 0 },
+            { x + w,     wh - (y),         1,   0 },
+
+            { x,         wh - (y + t),     0,   uvt },
+            { x + l,     wh - (y + t),     uvl, uvt },
+            { x + w - r, wh - (y + t),     uvr, uvt },
+            { x + w,     wh - (y + t),     1,   uvt },
+
+            { x,         wh - (y + h - b), 0,   uvb },
+            { x + l,     wh - (y + h - b), uvl, uvb },
+            { x + w - r, wh - (y + h - b), uvr, uvb },
+            { x + w,     wh - (y + h - b), 1,   uvb },
+
+            { x,         wh - (y + h),     0,   1 },
+            { x + l,     wh - (y + h),     uvl, 1 },
+            { x + w - r, wh - (y + h),     uvr, 1 },
+            { x + w,     wh - (y + h),     1,   1 },
+        }
+    )
+
+    mesh:setIndices({
+        1, 5, 2, 2, 5, 6,
+        2, 6, 3, 3, 6, 7,
+        3, 7, 4, 4, 7, 8,
+
+        5, 9, 6, 6, 9, 10,
+        6, 10, 7, 7, 10, 11,
+        7, 11, 8, 8, 11, 12,
+
+        9, 13, 10, 10, 13, 14,
+        10, 14, 11, 11, 14, 15,
+        11, 15, 12, 12, 15, 16,
+    })
+
+    return image, mesh
+end
+
 --- @param lib IUILib
 --- @param backend LovrIUIBackend
 function graphics.load(lib, backend)
@@ -313,55 +367,7 @@ function graphics.image(image, filter, x, y, w, h)
 end
 
 function graphics.nineSlice(nineSlice, filter, x, y, w, h)
-    local image = nineSlice.image --- @type Texture
-
-    local iw, ih = image:getDimensions()
-
-    local l, t, r, b = nineSlice.l, nineSlice.t, nineSlice.r, nineSlice.b
-    local uvl, uvt, uvr, uvb = l / iw, t / ih, (iw - r) / iw, (ih - b) / ih
-    local wh = windowHeight
-
-    local mesh = lovr.graphics.newMesh(
-        {
-            { "VertexPosition", "vec2" },
-            { "VertexUV",       "vec2" },
-        },
-        {
-            { x,         wh - (y),         0,   0 },
-            { x + l,     wh - (y),         uvl, 0 },
-            { x + w - r, wh - (y),         uvr, 0 },
-            { x + w,     wh - (y),         1,   0 },
-
-            { x,         wh - (y + t),     0,   uvt },
-            { x + l,     wh - (y + t),     uvl, uvt },
-            { x + w - r, wh - (y + t),     uvr, uvt },
-            { x + w,     wh - (y + t),     1,   uvt },
-
-            { x,         wh - (y + h - b), 0,   uvb },
-            { x + l,     wh - (y + h - b), uvl, uvb },
-            { x + w - r, wh - (y + h - b), uvr, uvb },
-            { x + w,     wh - (y + h - b), 1,   uvb },
-
-            { x,         wh - (y + h),     0,   1 },
-            { x + l,     wh - (y + h),     uvl, 1 },
-            { x + w - r, wh - (y + h),     uvr, 1 },
-            { x + w,     wh - (y + h),     1,   1 },
-        }
-    )
-
-    mesh:setIndices({
-        1, 5, 2, 2, 5, 6,
-        2, 6, 3, 3, 6, 7,
-        3, 7, 4, 4, 7, 8,
-
-        5, 9, 6, 6, 9, 10,
-        6, 10, 7, 7, 10, 11,
-        7, 11, 8, 8, 11, 12,
-
-        9, 13, 10, 10, 13, 14,
-        10, 14, 11, 11, 14, 15,
-        11, 15, 12, 12, 15, 16,
-    })
+    local image, mesh = nineSliceMesh(nineSlice, x, y, w, h)
 
     setFilter(filter)
     setShader("image")
@@ -377,6 +383,17 @@ function graphics.msdfImage(image, x, y, w, h)
     setShader("msdf")
     graphics.pass:setMaterial(image)
     graphics.pass:plane(x + w * 0.5, windowHeight - (y + h * 0.5), 0, w, h)
+    graphics.pass:setMaterial()
+end
+
+function graphics.msdfNineSlice(nineSlice, x, y, w, h)
+    local image, mesh = nineSliceMesh(nineSlice, x, y, w, h)
+
+    setFilter("linear")
+    setShader("msdf")
+    graphics.pass:setMaterial(image)
+
+    graphics.pass:draw(mesh)
     graphics.pass:setMaterial()
 end
 
