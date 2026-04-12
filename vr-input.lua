@@ -269,7 +269,7 @@ function input.draw(pass, window)
                 end
 
                 if cursor then
-                    local mx, my = intersection.uiPos[1], intersection.uiPos[2]
+                    local mx, my = intersection.uiPos:unpack()
 
                     pass:setShader(cursorShader)
                     pass:send("msdfSampler", cursorSampler)
