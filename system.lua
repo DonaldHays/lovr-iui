@@ -34,6 +34,10 @@ function system.load(lib, backend)
     end
 end
 
+function system.getOS()
+    return lovr.system.getOS()
+end
+
 function system.getTimestamp()
     return lovr.timer.getTime()
 end
