@@ -186,6 +186,12 @@ function input.beginWindow(window)
                         local canGrabActive = iui.activeID == nil
                         canGrabActive = canGrabActive and (lovr.headset.wasPressed(device, "trigger"))
 
+                        if session.activeHand and session.activeHand ~= device then
+                            if lovr.headset.isDown(session.activeHand, "grip") then
+                                canGrabActive = false
+                            end
+                        end
+
                         if session.activeHand == nil or canGrabActive then
                             session.activeHand = device
                             iui.input.mouse.resetVelocity()
@@ -214,6 +220,16 @@ function input.beginWindow(window)
                     local dx = mx - iui.input.mouse.x
                     local dy = my - iui.input.mouse.y
                     iui.input.mouse("move", 0, mx, my, dx, dy)
+
+                    if lovr.headset.isDown(device, "grip") then
+                        if not iui.input.keyboard.down:has("lctrl") then
+                            iui.input.keyboard("down", "lctrl", false)
+                        end
+                    else
+                        if iui.input.keyboard.down:has("lctrl") then
+                            iui.input.keyboard("up", "lctrl", false)
+                        end
+                    end
 
                     if lovr.headset.wasPressed(device, "trigger") then
                         iui.input.mouse("down", 1, mx, my, 0, 0)
