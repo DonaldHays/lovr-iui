@@ -15,7 +15,7 @@ local worldWindow = require(currentPath .. "world-window")
 --- @type LovrIUIVRInput
 local input = require(currentPath .. "vr-input")
 
-local desktopRootContext --- @type IUIRootContext
+local desktopRootContext --- @type IUIWindowManager
 
 --- @class LovrIUIBackend: IUIBackend
 --- @field mouse any
@@ -58,8 +58,8 @@ function backend.load(lib)
     worldWindow.load(lib, backend)
 
     if iui.idiom == "desktop" then
-        desktopRootContext = iui.newRootContext()
-        iui.setRootContext(desktopRootContext)
+        desktopRootContext = iui.newWindowManager()
+        iui.setWindowManager(desktopRootContext)
     end
 end
 

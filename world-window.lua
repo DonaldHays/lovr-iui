@@ -11,7 +11,7 @@ local input    --- @type LovrIUIVRInput
 --- @field h? number Defaults to 720
 
 --- @class LovrIUIWorldWindow
---- @field context IUIRootContext The root context the window operates in
+--- @field context IUIWindowManager The root context the window operates in
 --- @field center Vec3 The center of the window, in worldspace
 --- @field rotation Quat The direction the window is facing
 --- @field ppm number The scale of the window, in points per meter
@@ -36,7 +36,7 @@ function WorldWindow.new(props)
 
     --- @type LovrIUIWorldWindow
     local output = {
-        context = iui.newRootContext(),
+        context = iui.newWindowManager(),
         center = props.center or Vec3(0, 1.5, -1),
         rotation = props.rotation or Quat(),
         ppm = props.ppm or 1000,
@@ -79,7 +79,7 @@ end
 
 --- @return boolean
 function WorldWindow:beginFrame()
-    iui.setRootContext(self.context)
+    iui.setWindowManager(self.context)
     self.context:beginFrame()
     iui.beginWindow(self.w, self.h)
     input.beginWindow(self)
@@ -126,7 +126,7 @@ function WorldWindow:draw(pass)
     pass:setDepthWrite(false)
     pass:setFaceCull("back")
 
-    iui.setRootContext(self.context)
+    iui.setWindowManager(self.context)
     iui.draw()
 
     -- pass:setDepthOffset(0, 0)
