@@ -15,7 +15,9 @@ local worldWindow = require(currentPath .. "world-window")
 --- @type LovrIUIVRInput
 local input = require(currentPath .. "vr-input")
 
-local desktopRootContext --- @type IUIWindowManager
+local currentWorldWindow                  --- @type LovrIUIWorldWindow
+local desktopIdiomFullscreenWindowManager --- @type IUIWindowManager
+local desktopIdiomMouseRootContext        --- @type IUIMouseRootContext
 
 --- @class LovrIUIBackend: IUIBackend
 --- @field mouse any
@@ -58,25 +60,38 @@ function backend.load(lib)
     worldWindow.load(lib, backend)
 
     if iui.idiom == "desktop" then
-        desktopRootContext = iui.newWindowManager()
-        iui.setWindowManager(desktopRootContext)
+        desktopIdiomMouseRootContext = iui.input.mouse.newRootContext()
+        iui.input.mouse.setRootContext(desktopIdiomMouseRootContext)
     end
 end
 
 --- @param dt number
 function backend.beginFrame(dt)
-    if iui.idiom == "desktop" then
-        desktopRootContext:beginFrame()
-    elseif iui.idiom == "vr" then
+    if iui.idiom == "vr" then
         input.beginFrame(dt)
     end
 end
 
 function backend.endFrame()
-    if iui.idiom == "desktop" then
-        desktopRootContext:endFrame()
-    elseif iui.idiom == "vr" then
+    if iui.idiom == "vr" then
         input.endFrame()
+    end
+end
+
+--- @param newWorldWindow LovrIUIWorldWindow
+function backend.setCurrentWorldWindow(newWorldWindow)
+    currentWorldWindow = newWorldWindow
+end
+
+function backend.getFullscreenWindowManager()
+    if iui.idiom == "desktop" then
+        if desktopIdiomFullscreenWindowManager == nil then
+            desktopIdiomFullscreenWindowManager = iui.newWindowManager()
+        end
+
+        return desktopIdiomFullscreenWindowManager
+    elseif iui.idiom == "vr" then
+        return currentWorldWindow:getFullscreenWindowManager()
     end
 end
 

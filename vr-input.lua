@@ -90,8 +90,12 @@ function input.endFrame()
 
     -- Buzz controllers on hover.
     for window, session in pairs(windowSessions) do
-        local ctx = window.context
-        local hasHover, hasActive = ctx.hoverID ~= nil, ctx.activeID ~= nil
+        local hasHover, hasActive = false, false
+        local manager = window.fullscreenWindowManager
+        if manager then
+            hasHover = manager.hoverID ~= nil
+            hasActive = manager.activeID ~= nil
+        end
         hasHover = hasHover or hasActive
 
         if session.activeHand then
@@ -110,10 +114,14 @@ function input.endFrame()
     -- Empty the `hoveredWindows` table, but only for hands that aren't the
     -- `activeHand` of a window that has an `activeID`.
     for device, window in pairs(hoveredWindows) do
-        local ctx = window.context
+        local hasActive = false
+        local manager = window.fullscreenWindowManager
+        if manager then
+            hasActive = manager.activeID ~= nil
+        end
         local isActiveHand = false
 
-        if ctx.activeID ~= nil then
+        if hasActive then
             for _, session in pairs(windowSessions) do
                 if session.activeHand == device then
                     isActiveHand = true
@@ -155,7 +163,7 @@ function input.endFrame()
 end
 
 --- @param window LovrIUIWorldWindow
-function input.beginWindow(window)
+function input.beginWorldWindow(window)
     --- @type InputWindowSession
     local session = windowSessions[window] or {
         hadHover = false,
@@ -255,7 +263,7 @@ function input.beginWindow(window)
 end
 
 --- @param window LovrIUIWorldWindow
-function input.endWindow(window)
+function input.endWorldWindow(window)
 end
 
 --- @param pass Pass
@@ -277,9 +285,12 @@ function input.draw(pass, window)
 
                 local session = windowSessions[window]
 
-                local context = window.context
+                local cursor = nil
+                local manager = window.fullscreenWindowManager
+                if manager then
+                    cursor = iui.getCursor(manager.cursor) or system.defaultCursor
+                end
 
-                local cursor = iui.getCursor(context.cursor) or system.defaultCursor
                 if session.activeHand ~= device then
                     cursor = system.inactiveCursor
                 end

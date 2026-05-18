@@ -1,5 +1,5 @@
 local iui      --- @type IUILib
-local system   --- @type LovrIUISystem
+local backend  --- @type LovrIUIBackend
 local graphics --- @type LovrIUIGraphics
 local input    --- @type LovrIUIVRInput
 
@@ -11,7 +11,8 @@ local input    --- @type LovrIUIVRInput
 --- @field h? number Defaults to 720
 
 --- @class LovrIUIWorldWindow
---- @field context IUIWindowManager The root context the window operates in
+--- @field fullscreenWindowManager? IUIWindowManager The window manager that fills the world window
+--- @field mouse IUIMouseRootContext Mouse input data for the window
 --- @field center Vec3 The center of the window, in worldspace
 --- @field rotation Quat The direction the window is facing
 --- @field ppm number The scale of the window, in points per meter
@@ -21,10 +22,10 @@ local WorldWindow = {}
 WorldWindow.__index = WorldWindow
 
 --- @param lib IUILib
---- @param backend LovrIUIBackend
-function WorldWindow.load(lib, backend)
+--- @param theBackend LovrIUIBackend
+function WorldWindow.load(lib, theBackend)
     iui = lib
-    system = backend.system
+    backend = theBackend
     graphics = backend.graphics
     input = backend.input
 end
@@ -36,7 +37,7 @@ function WorldWindow.new(props)
 
     --- @type LovrIUIWorldWindow
     local output = {
-        context = iui.newWindowManager(),
+        mouse = iui.input.mouse.newRootContext(),
         center = props.center or Vec3(0, 1.5, -1),
         rotation = props.rotation or Quat(),
         ppm = props.ppm or 1000,
@@ -79,18 +80,25 @@ end
 
 --- @return boolean
 function WorldWindow:beginFrame()
-    iui.setWindowManager(self.context)
-    self.context:beginFrame()
-    iui.beginWindow(self.w, self.h)
-    input.beginWindow(self)
+    backend.setCurrentWorldWindow(self)
+    iui.input.mouse.setRootContext(self.mouse)
+
+    input.beginWorldWindow(self)
 
     return true
 end
 
 function WorldWindow:endFrame()
-    input.endWindow(self)
-    iui.endWindow()
-    self.context:endFrame()
+    input.endWorldWindow(self)
+end
+
+--- @return IUIWindowManager
+function WorldWindow:getFullscreenWindowManager()
+    if self.fullscreenWindowManager == nil then
+        self.fullscreenWindowManager = iui.newWindowManager()
+    end
+
+    return self.fullscreenWindowManager
 end
 
 --- @param pass Pass
@@ -126,8 +134,11 @@ function WorldWindow:draw(pass)
     pass:setDepthWrite(false)
     pass:setFaceCull("back")
 
-    iui.setWindowManager(self.context)
-    iui.draw()
+    local manager = self.fullscreenWindowManager
+    if manager then
+        iui.draw.setWindowManager(manager)
+        iui.draw()
+    end
 
     -- pass:setDepthOffset(0, 0)
     input.draw(pass, self)
