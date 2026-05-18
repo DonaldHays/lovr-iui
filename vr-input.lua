@@ -90,12 +90,10 @@ function input.endFrame()
 
     -- Buzz controllers on hover.
     for window, session in pairs(windowSessions) do
-        local hasHover, hasActive = false, false
-        local manager = window.fullscreenWindowManager
-        if manager then
-            hasHover = manager.hoverID ~= nil
-            hasActive = manager.activeID ~= nil
-        end
+        iui.input.mouse.setRootContext(window.mouse)
+        iui.input.mouse.endFrame()
+
+        local hasHover, hasActive = window:getHasHover(), window:getHasActive()
         hasHover = hasHover or hasActive
 
         if session.activeHand then
@@ -114,11 +112,7 @@ function input.endFrame()
     -- Empty the `hoveredWindows` table, but only for hands that aren't the
     -- `activeHand` of a window that has an `activeID`.
     for device, window in pairs(hoveredWindows) do
-        local hasActive = false
-        local manager = window.fullscreenWindowManager
-        if manager then
-            hasActive = manager.activeID ~= nil
-        end
+        local hasActive = window:getHasActive()
         local isActiveHand = false
 
         if hasActive then
@@ -191,7 +185,7 @@ function input.beginWorldWindow(window)
 
                 if fuzzyInside > 0 then
                     if hoveredWindows[device] == window then
-                        local canGrabActive = iui.activeID == nil
+                        local canGrabActive = not window:getHasActive()
                         canGrabActive = canGrabActive and (lovr.headset.wasPressed(device, "trigger"))
 
                         if session.activeHand and session.activeHand ~= device then
@@ -252,7 +246,7 @@ function input.beginWorldWindow(window)
                     iui.input.mouse.scrollY = sy
 
                     if window:fuzzyInside(mx, my) <= 0 then
-                        if iui.activeID == nil then
+                        if not window:getHasActive() then
                             session.activeHand = nil
                         end
                     end

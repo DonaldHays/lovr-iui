@@ -101,6 +101,24 @@ function WorldWindow:getFullscreenWindowManager()
     return self.fullscreenWindowManager
 end
 
+--- @return boolean
+function WorldWindow:getHasHover()
+    if self.fullscreenWindowManager then
+        return self.fullscreenWindowManager.hoverID ~= nil
+    end
+
+    return false
+end
+
+--- @return boolean
+function WorldWindow:getHasActive()
+    if self.fullscreenWindowManager then
+        return self.fullscreenWindowManager.activeID ~= nil
+    end
+
+    return false
+end
+
 --- @param pass Pass
 function WorldWindow:draw(pass)
     graphics.setWindow(self)
