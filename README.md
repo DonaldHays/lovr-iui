@@ -116,11 +116,13 @@ function lovr.update(dt)
     iui.beginFrame(dt)
 
     if window:beginFrame() then
+        iui.beginWindow(window.w, window.h)
         iui.panelBackground()
         iui.label(labelText)
         if iui.button("Say Hello") then
             labelText = "Hello, World!"
         end
+        iui.endWindow()
 
         window:endFrame()
     end
